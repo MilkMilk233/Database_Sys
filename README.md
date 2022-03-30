@@ -33,7 +33,7 @@ last update:2022/3/30
 
 Demo：
 
-[[CSC3170 Web测试](https://laxdata.cuhk.edu.cn/hello/)](https://laxdata.cuhk.edu.cn/hello/)
+[[Database_Sys Web测试](https://laxdata.cuhk.edu.cn/hello/)](https://laxdata.cuhk.edu.cn/hello/)
 
 
 
