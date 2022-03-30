@@ -1,4 +1,4 @@
-## CSC3170 Project 技术方案
+## Database Sys Project 技术方案
 
 维护者：
 
