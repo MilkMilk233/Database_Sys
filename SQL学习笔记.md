@@ -319,3 +319,102 @@ natural join的匹配机制是，假如A表格有a，b，c三个attribute，B表
 
 和上面的类似，区别在于对匹配不到的结果的处理：不是直接扔掉，而是sign上null后保留在末尾，相当于将所有（不完美匹配a和b的）可能性都加上去了，只是缺失的部分用null填满。（设为代表未知的null）
 
+
+
+## Views
+
+### Introduction
+
+相当于python中的def，实现节约代码量的目标
+
+```sql
+create view department_total_salary(dept_name, total_salary) as
+	select dept_name, sum(Salary) as total_salary
+	from instructor
+	group by dept_name
+```
+
+假设v1，v2，v3都是views，那么；
+
+如果v1内含v2，叫做v1 depend directly on v2
+
+如果v1内含v2，或者v1内含v3，v3内含v2，叫做v1 depend on v2
+
+如果v1内含v1，那么就叫recursive
+
+### Materialized Views
+
+指的是有些数据库系统在views被初次定义的时候，就一次性拉取了table并储存了起来，有别于其他实时分析拉取的views方法。
+
+那么我们就要保证，当views所拉取的tables的内容发生改变时，views也得重新拉取并update/alter。
+
+大部分的数据库支持对views进行insert/update，前提是这个只是一个simple views。
+
+simple views的定义：
+
+1. from语句内只有一个database relation
+2. select语句内只有一个attribute，且不包含其他的表达式、集合或是distinct声明
+3. 没有group by或having声明
+
+
+
+## Transactions
+
+### Introduction
+
+transaction是指多个query 和/或 update的声明组合成的集合，是一个大型功能块。
+
+当执行第一个query的时候，就算开始了一段transaction。
+
+结束有两种方式：
+
+1. commit work，提交并保存
+2. rollback work，不保存并退出
+
+Atomic transaction：指要么完全执行完成，要么不保存就退出（指没有跳转到别的transaction去）
+
+同时，我们要对同时进行的transaction进行保障。
+
+### Integrity constraints
+
+系统设置了很多Integrity constraints完整性约束，防止数据出错。
+
+典型案例：
+
+#### not null
+
+该attribute中禁止出现null值，常出现在primary key中（因为pk不允许有null值）
+
+#### unique
+
+unique(A1,A2,A3) 指A1,A2,A3可以形成一个candidate key，有别于primary key的是，可以含有null值。
+
+#### check
+
+example:
+
+```sql
+create table section 
+    (course_id varchar (8),
+    sec_id varchar (8),
+    semester varchar (6),
+    year numeric (4,0),
+    building varchar (15),
+    room_number varchar (7),
+    time slot id varchar (4), 
+    primary key (course_id, sec_id, semester, year),
+    check (semester in ('Fall', 'Winter', 'Spring', 'Summer')))
+```
+
+check规则在创建table的时候就应该declare，在后续的数据insert/update中，要求满足条件方可进行，否则拒绝请求。
+
+
+
+### Referential Integrity
+
+又名参照完整性，指的是若某个数据在一个table(relation)里出现，就一定要在另一个table(relation)里出现。
+
+#### Foreign key
+
+假如说R和S是两个relation，都包含A这个attribute（A是S的pk, primary key）。假如说一个值必须要先出现在S，才能出现在R，那么我们把它称为 A is a foreign key of R (A是R的外键)
+
