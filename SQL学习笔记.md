@@ -4,9 +4,9 @@ Last update: 2022/4/12
 
 FEATURE: NOT SENSITIVE ON UPPER & LOWER LETTER.
 
+[TOC]
 
-
-INSERT:
+## INSERT:
 
 ```sql
 INSERT INTO INSTRUCTOR VALUES ('10211', 'SMITH', 'BIOLOGY',66000 )
@@ -23,7 +23,7 @@ INSERT INTO INSTRUCTOR
 	WHERE DEPT_NAME = 'MUSIC' AND TOTAL_CRED > 144;
 ```
 
-UPDATE:
+## UPDATE:
 
 更新表中的所有数据：
 
@@ -65,7 +65,7 @@ UPDATE INSTRUCTOR
 				END
 ```
 
-DELETE:
+## DELETE:
 
 只是删除所有数据，不删除格式
 
@@ -88,7 +88,7 @@ DELETE FROM INSTRUCTOR WHERE DEPT_NAME IN (SELECT DEPT_NAME FROM DEPARTMENT WHER
 DELETE FROM INSTRUCTOR WHERE SALARY < (SELECT AVG(SALARY) FROM INSTRUCTOR)
 ```
 
-DROP:
+## DROP:
 
 数据连同格式一起删除
 
@@ -96,7 +96,7 @@ DROP:
 DROP TABLE R
 ```
 
-ALTER:
+## ALTER:
 
 ```SQL
 ALTER TABLE R ADD A D  # JOIN R WITH NEW ATTRIBUTE OF NAME A AND TYPE D
@@ -108,7 +108,7 @@ ALTER TABLE R DROP A # DELETE CERTAIN COL OF TABLE R
 
 
 
-BASIC GRAMMAR:
+## BASIC GRAMMAR:
 
 ```SQL
 SELECT A1 FROM R1 WHERE ATTRIBUTE = 'XXX'
@@ -283,4 +283,39 @@ SELECT DEPARTMENT.NAME
 FROM DEPARTMENT, MAX_BUDGET
 WHERE DEPARTMENT.BUDGET = MAX_BUDGET.VALUE
 ```
+
+
+
+## Join
+
+### Natural Join
+
+前面提到的insert是增加行。如果要增加列，一般用join等方法。
+
+```SQL
+# 在这里，name是student里的attribute，course_id是takes的attribute
+SELECT NAME, COURSE_ID FROM STUDENT, TAKES WHERE STUDENT.ID = TAKES.ID;
+# 同时，也可以用natural join表示
+SELECT NAME, COURSE_ID FROM STUDENT NATURAL JOIN TAKES;
+```
+
+但natural join在某种情况下会变得很危险。
+
+natural join的匹配机制是，假如A表格有a，b，c三个attribute，B表格有a, b, e, f四个attribute。此时因为a和b在两个表格中都存在，所以系统会筛选出a和b完全match的一副tuple拼接在一起。若在这种情况下，我们不希望全部匹配（比如说我只是希望match a 这个pair），那么就要手工通过where A.a = B.a 进行匹配，不可以用natural join。
+
+### Outer Join
+
+效果：减少数据损失，即对natura join产生问题的解决方案。
+
+#### Left Outer Join
+
+还是刚刚的假设，假如A表格有a，b，c三个attribute，B表格有a, b, e, f四个attribute。此时因为a和b在两个表格中都存在，我们要求在**左边**的tuple**全部保留**，并尽可能地寻找右边match的pair，如果都能在a,b这两个attribute上完美match就最好了，没有的话还是要把左边留着，右边的内容就用null替代。剩下右边无法与左边匹配的就扔了吧。
+
+#### Right Outer Join
+
+和上面的类似，只是将左换成右
+
+#### Full Outer Join
+
+和上面的类似，区别在于对匹配不到的结果的处理：不是直接扔掉，而是sign上null后保留在末尾，相当于将所有（不完美匹配a和b的）可能性都加上去了，只是缺失的部分用null填满。（设为代表未知的null）
 
