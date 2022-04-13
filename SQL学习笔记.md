@@ -65,6 +65,8 @@ UPDATE INSTRUCTOR
 				END
 ```
 
+
+
 ## DELETE:
 
 只是删除所有数据，不删除格式
@@ -131,7 +133,7 @@ SELECT 'ABC' FROM TEACHERS #ONE COL OF EQUAL LENGTH AS TABLE TEACHERS, FULL OF '
 ```
 
 ```SQL
-SELECT SALARY/12 FROM INSTRUCTORS # SUPPORT +, -, *, / ON NUMERIC VAL
+SELECT SALARY/12 FROM INSTRUCTORS # SUPPORT +, -, *, /, MOD(A,B) FOR A % B ON NUMERIC VAL
 ```
 
 ```SQL
@@ -288,7 +290,7 @@ WHERE DEPARTMENT.BUDGET = MAX_BUDGET.VALUE
 
 ## Join
 
-### Natural Join
+### Natural Join # 警告：Mysql不支持natural join，等效替换inner join
 
 前面提到的insert是增加行。如果要增加列，一般用join等方法。
 
@@ -307,15 +309,15 @@ natural join的匹配机制是，假如A表格有a，b，c三个attribute，B表
 
 效果：减少数据损失，即对natura join产生问题的解决方案。
 
-#### Left Outer Join
+#### Left Outer Join # Mysql支持，等同于left join
 
 还是刚刚的假设，假如A表格有a，b，c三个attribute，B表格有a, b, e, f四个attribute。此时因为a和b在两个表格中都存在，我们要求在**左边**的tuple**全部保留**，并尽可能地寻找右边match的pair，如果都能在a,b这两个attribute上完美match就最好了，没有的话还是要把左边留着，右边的内容就用null替代。剩下右边无法与左边匹配的就扔了吧。
 
-#### Right Outer Join
+#### Right Outer Join # Mysql支持，等同于right join
 
 和上面的类似，只是将左换成右
 
-#### Full Outer Join
+#### Full Outer Join  # Mysql 中不支持
 
 和上面的类似，区别在于对匹配不到的结果的处理：不是直接扔掉，而是sign上null后保留在末尾，相当于将所有（不完美匹配a和b的）可能性都加上去了，只是缺失的部分用null填满。（设为代表未知的null）
 
@@ -544,6 +546,63 @@ grant instructor to president # President has all privilege of instructors
 grant select on student_info to instructor
 grant delete on student_info to instructor 
 ```
+
+
+
+## 一些题目
+
+[Leetcode 1667](https://leetcode-cn.com/problems/fix-names-in-a-table/)
+
+编写一个 SQL 查询来修复名字，使得只有第一个字符是大写的，其余都是小写的。
+
+返回按 `user_id` 排序的结果表。
+
+```sql
+select  
+    user_id,  CONCAT(upper(left(name, 1)), lower(substr(name, 2))) name
+from 
+    users
+order by 
+    user_id;
+```
+
+用left函数取名字首字符转为大写，用substr取名字第二个及之后所有字符转为小写，再拼接即可。 `substr(string,pos,end)`这个函数不填入end就是取pos位置及其之后所有的字符。
+
+
+
+[Leetcode 1484](https://leetcode-cn.com/problems/group-sold-products-by-the-date/)
+
+编写一个 SQL 查询来查找每个日期、销售的不同产品的数量及其名称。
+每个日期的销售产品名称应按词典序排列。
+返回按 sell_date 排序的结果表。
+
+```sql
+select
+    sell_date,
+    count(distinct product) num_sold,
+    GROUP_CONCAT(distinct product) products
+from
+    activities
+group by sell_date
+order by sell_date;
+```
+
+GROUP_CONCAT可以将所有位于该组的单元连在一起，并用逗号隔开。如`"Basketball,Headphone,T-Shirt"`
+
+
+
+[Leetcode 176](https://leetcode-cn.com/problems/second-highest-salary/)
+
+编写一个 SQL 查询，获取并返回 `Employee` 表中第二高的薪水 。如果不存在第二高的薪水，查询应该返回 `null` 。
+
+```sql
+select ifNull((
+select distinct Salary
+from Employee
+order by Salary desc limit 1,1),null) as SecondHighestSalary
+```
+
+limit y offset x 分句表示查询结果跳过 x 条数据，读取前 y 条数据
 
 
 
