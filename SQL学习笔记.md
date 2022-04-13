@@ -408,7 +408,13 @@ create table section
 
 check规则在创建table的时候就应该declare，在后续的数据insert/update中，要求满足条件方可进行，否则拒绝请求。
 
+下面的sql是在创建table `section`时的语句：
 
+```SQL
+CHECK (TIME_SLOT_ID IN (SELECT TIME_SLOT_ID FROM TIME_SLOT))
+```
+
+在检查上面的条件时，不仅需要在每次insert的时候重新拉取subquery，而且当`time_slot`这张tableupdate的时候，需要检查原先`section`中的数据是否符合新规则，若不符合则拒绝请求。
 
 ### Referential Integrity
 
@@ -417,4 +423,127 @@ check规则在创建table的时候就应该declare，在后续的数据insert/up
 #### Foreign key
 
 假如说R和S是两个relation，都包含A这个attribute（A是S的pk, primary key）。假如说一个值必须要先出现在S，才能出现在R，那么我们把它称为 A is a foreign key of R (A是R的外键)
+
+ 一般来说，被引的那个foreign key都是对方的primary key。
+
+```SQL
+FOREIGN KEY(DEPT_NAME) REFERENCES DEPARTMENT (DEPT_NAME)
+# 简略版：
+FOREIGN KEY(DEPT_NAME) REFERENCES DEPARTMENT 
+```
+
+
+
+## Data type
+
+常见的datatype: varchar, numeric, int, ...
+
+### Built-in Data Types
+
+date
+
+```sql
+date '2020-7-27'
+```
+
+time
+
+```sql
+time '09:00:30'
+```
+
+timestamp
+
+```sql
+timestamp '2020-7-27 09:00:30'
+```
+
+### Large-Object Types
+
+可以用于存放图片，视频等大文件。需要注意的是，query返回的是一个指向大文件的指针。
+
+#### 以二进制(binary code)形式存放
+
+`blob`
+
+#### 以字符(char)形式存放
+
+`clob`
+
+### User-Defined Types
+
+用户可以方便地自定义类型。在创建table时须提前声明。
+
+```sql
+create type Dollars as numeric (12,2) final
+
+create table department
+(dept_name varchar (20),
+building varchar (15),
+budget Dollars);
+```
+
+### Domains
+
+在user-defined的基础上，加多了attribute的constraint（check, not null, foreign key etc.)。
+
+```sql
+create domain person_name char(20) not null
+```
+
+### Index
+
+```SQL
+CREATE INDEX STUDENT_INDEX ON STUDENT(ID)
+```
+
+优点：加快用户query搜索速度
+
+缺点：减慢数据库insert/update更新速度
+
+常用于primary key等经常被搜索的值上，用户不可见，隐性加速。
+
+
+
+## Authorization
+
+用户可能拥有不同的权限：
+
+- select - 读取
+- Insert - 插入
+- Update - 更改
+- Delete - 删除
+- all privileges - 全部权限
+
+一个用户可以拥有以上所有权限，也可能在某个relation中权限受限。
+
+利用grant语句赋权，格式是 grant + 权限 + on + table名 + to + 用户名
+
+```sql
+grant select, insert on department to Alex, Mike
+```
+
+但这不意味者被赋权的用户拥有该table所引用的子表的相对应权限。
+
+利用rewoke语句撤销权限。
+
+```sql
+revoke select, insert on department from Alex, Mike
+```
+
+可以创建用户组(role)，方便对用户赋权。
+
+用户组可以叠加，形成层级结构。
+
+```sql
+create role instructor
+create role president
+grant instructor to Yangzhou_Deng
+grant president to Yangsheng_Xu
+grant instructor to president # President has all privilege of instructors
+grant select on student_info to instructor
+grant delete on student_info to instructor 
+```
+
+
 
