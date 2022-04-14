@@ -286,6 +286,12 @@ FROM DEPARTMENT, MAX_BUDGET
 WHERE DEPARTMENT.BUDGET = MAX_BUDGET.VALUE
 ```
 
+```sql
+ROUND(x,2) # 将x保留两位小数
+SUM(ATTRIBUTE) # 累加某个attribute，通常出现在group by从句
+SUM(IF(T.STATUS = 'completed', 0,1)) # 如果满足条件则等效替换为1，否则0.
+```
+
 
 
 ## Join
@@ -446,6 +452,12 @@ date
 
 ```sql
 date '2020-7-27'
+```
+
+*Example*
+
+```sql
+DATEDIFF(w1.RecordDate, w2.RecordDate) # == w1 - w2的天数
 ```
 
 time
