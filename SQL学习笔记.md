@@ -292,6 +292,10 @@ SUM(ATTRIBUTE) # 累加某个attribute，通常出现在group by从句
 SUM(IF(T.STATUS = 'completed', 0,1)) # 如果满足条件则等效替换为1，否则0.
 ```
 
+```sql
+# <> equivalent to !=
+```
+
 
 
 ## Join
@@ -618,3 +622,63 @@ limit y offset x 分句表示查询结果跳过 x 条数据，读取前 y 条数
 
 
 
+[Leetcode 178](https://leetcode-cn.com/problems/rank-scores/)
+
+编写 SQL 查询对分数进行排序。排名按以下规则计算:
+
+分数应按从高到低排列。
+如果两个分数相等，那么两个分数的排名应该相同。
+在排名相同的分数后，排名数应该是下一个连续的整数。换句话说，排名之间不应该有空缺的数字。
+按 score 降序返回结果表。
+
+```sql
+SELECT
+    score,
+    dense_rank() over (order by Score desc) AS "rank" 
+FROM
+    Scores;
+```
+
+*固定组合：*rank + over + order
+
+rank() over (order by Score desc)：排名相同的两名是并列，但是占两个名次，1 1 3 4 4 6这种
+
+dense_rank() over (order by Score desc)：排名相同的两名是并列，共占一个名词，1 1 2 3 3 4这种
+
+row_number() over(order by Score desc)这个函数不需要考虑是否并列，哪怕根据条件查询出来的数值相同也会进行连续排名 1 2 3 4 5
+
+
+
+[Leetcode 601](https://leetcode-cn.com/problems/human-traffic-of-stadium/)
+
+编写一个 SQL 查询以找出每行的人数大于或等于 `100` 且 `id` 连续的三行或更多行记录。
+
+返回按 `visit_date` **升序排列** 的结果表。
+
+```sql
+SELECT 
+    id, visit_date, people
+FROM (
+     SELECT 
+        id, visit_date, people, count(*) over(partition by tag) as cnt_tag
+     FROM (
+        SELECT 
+            id, visit_date, people, id - row_number() over(order by id) as tag
+        FROM 
+            stadium
+        WHERE 
+            people >= 100
+    ) t
+) y
+WHERE 
+    cnt_tag >= 3
+ORDER BY id;
+```
+
+关键点在`id - row_number() over(order by id) as tag`这里，在上一轮搜索中，已经筛掉了那些人数小于100人的记录，此时再手动加上id的话，会在被筛掉的间隙产生“断层”——断层和断层之间的`id - row_number() over(order by id) as tag`是一样的，也就是说，我们可以通过这个，来筛选紧密相连的记录。
+
+
+
+[Leetcode 1097](https://leetcode-cn.com/problems/game-play-analysis-v/)
+
+count() 并不会将null计入。
