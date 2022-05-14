@@ -4,6 +4,8 @@ Last update: 2022/4/12
 
 FEATURE: NOT SENSITIVE ON UPPER & LOWER LETTER.
 
+Based on MySQL
+
 [TOC]
 
 ## INSERT:
@@ -520,6 +522,28 @@ CREATE INDEX STUDENT_INDEX ON STUDENT(ID)
 缺点：减慢数据库insert/update更新速度
 
 常用于primary key等经常被搜索的值上，用户不可见，隐性加速。
+
+
+
+### Rownum
+
+只在Mysql中有，在postgresql中没有
+
+是隐藏列，记录了行号，可以充当limit的作用
+
+```sql
+SELECT ROWNUM AS RANK, ENAME, JOB, SALARY FROM
+(SELECT ENAME, JOB, SAL AS SALARY FROM EMP ORDER BY SAL DESC)
+WHERE ROWNUM <= 5
+```
+
+
+
+### CUBE / ROLLUP
+
+结合group by使用，会产生多个subtotals，对多个group by中的category进行集合统计，区别是前者(CUBE)是括号内所有的组合，后者是{},{1},{1,2},{1,2,3}这样的组合。
+
+
 
 
 
