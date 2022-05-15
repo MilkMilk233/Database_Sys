@@ -372,7 +372,7 @@ time-stamp order = serializability order.
 
 
 
-Timestamp-ordering protocol 时间戳协议
+Timestamp-ordering（**TSO**） protocol 时间戳协议
 
 W-timestamp 代表最后一次write (Q)的时间
 
@@ -381,6 +381,237 @@ R-timestamp 代表最后一次read (Q)的时间
 如果事务T将要进行read时，他会检测是否有大于当前时间戳的W-timestamp，若有则说明出现了不可重复（？）读，需要对T进行回滚。
 
 如果事务T将要进行write时，他会检测是否有大于当前时间戳的W-timestamp和R-timestamp，若有则说明出现了不可重复读（？）或无效写（？，存疑），需要对T进行回滚。
+
+
+
+transaction with smaller timestamp always points to transaction with larger timestamp, 所以采用时间戳排序协议将不会再有死锁问题。
+
+一个事务一次全部执行，然后随着时间的流逝，下一个随后的事务继续全部完成。如果没有达到预期目标，就需要进行回滚。
+
+Thomas' Write Rule
+
+Obsolete(过时的) write operation may be ignored under certain circumstances. 如果在未来write之前做了一个无效写，其实这个无效写是可以被忽略的。
+
+
+
+## Lecture 16: Recovery
+
+
+
+事务故障：
+
+- Logical errors：
+- System errors
+
+系统故障
+
+- Fail-stop assumption: 系统终止，但硬盘里的内容一般不会出问题
+
+磁盘故障
+
+- disk drives use checksums to detect failures
+
+几种存储系统：
+
+Volatile storage: Do not survive system crashes.
+
+Nonvolatile storage - Survive system crashes, like disk, etc. But may still fall.
+
+Stable storage - A mythical form (想象的存储) that survive all kinds of failure, approximated by maintaining multiple copies on distinct nonvolatile media. 
+
+
+
+Physical block - blocks that on the disk
+
+Buffer blocks - blocks that in main memory.
+
+
+
+Log-based recovery mechanisms. 日志, 快照
+
+shadow-copy / shadow-paging: less used alternative 
+
+<T commit>
+
+<Ti, X, V1, V2>
+
+
+
+Update to private part of main memory do not count as database modification.
+
+Update log record must be written before database item is written.
+
+Log 日志数据都存储在**stable storage**（nonvolatile) 上
+
+- Immediate-modification scheme: allows updates of an **uncommitted** transaction to buffer / disk itself.
+- deferred-modification scheme: performs updates to buffer/disk only at the time of transaction commit.
+
+
+
+Commit Point
+
+当一个事务的commit log到了stable storage的时候，这个事务就叫做committed.
+
+
+
+Undo:
+
+undo的时候，日志上会记录<T abort>. 将T涉及到的所有更新**全部**撤销。
+
+Redo:
+
+redo: 重做，顾名思义，**全部**重做。
+
+
+
+在数据恢复时，日志上所有不带<commit>和<abort>的事务都需要被undone,所有带<commit>和<abort>的事务都要被redone.
+
+
+
+包括一些没做完的failure，恢复数据时依然会redone -> failure again.（called `repeating history`). 优点：不用手动判断failure与否，放权给系统自动完成
+
+
+
+<checkpoint> : 每次redo/undo 所有事务是个很慢的过程，有什么方法改善吗？用<checkpoint>。顾名思义，checkpoint用来保存存档点。
+
+- All updates are stopped while checkpoint operation is in progress.
+- Output all log records current residing in **main memory** to **Stable storage**. 
+- Output all modified blocks to the disk
+- Output a log record <checkpoint L> onto **Stable storage** where L is a list of all transactions active at a time of checkpoint.
+
+所以，在ckp之前commit的事务，都不需要redo。
+
+系统会自动查最后一个checkpoint，三种redo/undo情况：
+
+1. 在checkpoint前start，checkpoint后commit -> redo
+2. ckp后start, checkpoint后commit -> redo
+3. ckp后start，无commit -> undo
+
+
+
+Recovery Algorithm
+
+正常情况下的工作
+
+- Logging,将所有事务的活动都计入日志，以<commit>结尾。
+- Transaction rollback，将正常事务的rollback计入日志，以<abort>结尾。往前回滚时，若遇到<T, X, V1, V2>则db先令 X = V1 然后在日志中写<T, X, V1>，代表将事务复原到V1的样子。继续往前回滚，直到遇到<T start>, 则写入<T abort>，回滚结束。
+
+*正常情况下的工作，无论是locking还是rollback，活动都会被记录在log里*
+
+不正常情况下的工作，分为两个阶段
+
+1. Redo phase, 首先找到第一个checkpoint，然后**从前往后扫描**。若找到普通的<T X V1 V2>或<T X V1>语句，则直接进行redo。若找到<T1 start>, 则加入undo list. 若找到<T1 commit>或<T1 undo>, 则在undo list中剔除T1的记录。
+2. Undo phase，**从后往前扫描**。若当前< T X V1 V2 >的T位于undo list里，则执行复原操作 X = V1且在日志后加上< T X V1 >, 若读到< T start >且T位于undo list里，则在日志后加入< T abort > 且将T从undo list中删除。当undo list为空的时候停止undo phase。
+
+在undo phase后，代表数据恢复完成，程序可正常运行。
+
+Log record buffer一般存储在main memory中，当 **满了** 或 **Execute log force** operation的时候才被写入stable storage.
+
+Log force一旦被执行，就会commit all transaction(including the commit record).
+
+
+
+
+
+如果log被buffer存储的时候，需要遵循以下原则:
+
+- 必须按顺序装入stable storage。
+- 必须等到< T commit >之后才写入buffer
+- 在一个main memory block被传输到stable storage前，需要保证前序关联数据已完成传输（called ：write-ahead logging (WAL)）
+
+
+
+## Chapter 17 Data Warehouse
+
+面向分析的数据库，叫Data warehouse - 数据仓库。
+
+Business intelligence - BI
+
+Decision support systems - DSS
+
+
+
+Descriptive analytics(Past) -> Predictive Analytics(Future) -> Prescriptive Analytics(Decision)
+
+
+
+Data warehouse often uses **star schema** or sometimes **snowflake schema**. 
+
+
+
+ER relationship modeling有时候会有一些缺点：
+
+- Very symmetric
+- Cannot tell which table is most **important** or **largest**
+- Cannot tell which tables hold static or dynamic business information
+- Joining of any tables is possible by user.
+
+
+
+关于star schema的定义：
+
+- 由一个中心的fact table和若干各other tables组成，其中fact table与每一个other table互相连接，而每一个other table之和fact table一个进行连接，呈蒲公英状。
+- A **star query** is a join between a fact table and a number of lookup tables. Each lookup table is joined to the fact table using a primary-key to foreign-key join, but the lookup tables are not joined to each other.
+- 特征：very asymmetric, commonly used in Data Warehouses. 
+
+
+
+Fact table
+
+- Fact table tends to contain **additive facts**(附加事实)
+- fact table have composite keys
+- all other tables are dimension tables
+- Every combination of key values would give rise to a different record in the fact table.
+- Fact table is naturally highly normalized
+
+Dimension Tables
+
+- Dimension table tends to contain textual or non-additive facts
+- Dimension tables should not be normalized
+- Normalized dimension table destroy the ability to browse
+
+Data Cube view: Each combinations of keys in fact table correspond to one of the small cubes.(dice)
+
+
+
+Star Join:
+
+A primary-key to foreign-key join of the dimension tables to a fact table. The fact table normally has a concatenated index on the key columns to facilitate this type of join.
+
+Advantages: 
+
+- provide a direct and intuitive mapping between the business entities being analyzed by the end users and the schema design.
+- Provides highly optimized performance for typical data warehouse queries.
+
+
+
+Snowflake schema (Undesirable):
+
+This is a type of star schema, but more complex. It **normalize** dimensions to eliminate redundancy. The dimension data has been grouped into multiple tables instead of one large table.
+
+Undesirable, because it may lead to more complex queries and reduced query performance. 
+
+
+
+DSS(Decision support systems) - 决策系统数据 vs. Operational data 操作（生产）数据
+
+一个做分析用，一个做生产用，两个的需求不同，导致设计出来的功能特性也不同。
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
 
 
 
