@@ -1,15 +1,175 @@
 # CSC3170 Final Review
 
-## Lecture 13: RAID
+## Chapter 2
+
+super key > candidate key(minimal) > primary key
+
+
+
+## Chapter 3
+
+<u>How to express one/many to one/many relationship in ER diagram?</u>
+
+To one : ->
+
+To many: --
+
+Total participation : == (Every entity in the entity set participates in **at least one** relationship in the relationship set)
+
+Notions: 0..* means each instructor link with 0 to infinity students.
+
+(请试着用自然语言理解)
+
+
+
+## Chapter 4
+
+Specialization / Generalization: Nearly the same. Can change each other.
+
+Some advanced feature when drawing ER diagram.
+
+(But the implementations of the relation schema are still the same)
+
+
+
+## Chapter 5
+
+**1NF = First Normal Form**
+
+Domain is atomic, i.e., the elements are considered to be indivisible units.
+
+
+
+lossy vs. lossless decomposition
+
+
+
+Super key, Candidate Key, Primary Key
+
+prime attribute : a member of some candidate key.
+
+
+
+**2NF = Second Normal Form**
+
+A relation schema R is in second normal form if every nonprime attribute A in R is fully functional dependent(<u>Full FD</u>) on the primary key.
+
+
+
+
+
+Transitive functional dependency: a FD X->Z that can be derived from two FDs X->Y and Y->Z, where Y is a nonprime attribute.
+
+**3NF = Third Normal Form**
+
+A relationship is in 3NF <u>if it is in 2NF</u> and no nonprime attribute A in R is transitively dependent on the primary key.
+
+
+
+For multiple candidate keys: 
+
+**2NF Formal definition:** A relation is in 2NF if every nonprime attribute A in R is fully functional dependency (FD) on **every** candidate key of R.
+
+**3NF Formal definition:** 
+
+A relation is in 3NF if whenever a nontrivial functional dependency X->A holds in R, then either
+
+- X is a super key of R
+- A is a prime attribute of R (为了除开prime attribute -> prime attribute的特殊FD情况)
+- (Or when in multi-candidate cases - Each attribute in A-X is a prime attribute of R)
+
+Or, we can define in another way
+
+**3NF Formal definition in another way**
+
+A relation schema R is in 3NF if every nonprime attribute in R meets both of these conditions
+
+- It is fully functionally dependent on every candidate key of R
+- It is non-transitively dependent on every candidate key of R
+
+Note that stated in this way, a relation in 3NF also meets the requirements for 2NF.
+
+
+
+
+
+A decomposition that makes it computationally hard to enforce FD is said to be NOT dependency preserving.
+
+**BCNF(Boyce-Codd normal form)**
+
+A relation schema is in BCNF with respect to a set F of functional dependencies if for all functional dependencies in F+ of the form a->b where a<= R and b <= R, at least one of the following holds:
+
+- a -> b is trivial
+- a is a super key for R
+
+*So BCNF says that every determinant(left hand side of a FD) is a super key*
+
+<u>It is not always possible to achieve both BCNF and dependency preservation.</u>
+
+If a relation is in BCNF then it is in 3NF.
+
+
+
+## Chapter 6: Functional Dependency Theory
+
+Closure of Functional Dependencies:
+
+Union rules: If a -> b holds and a -> y holds, then a -> {b,y} (also called by) holds
+
+Decomposition rule: If a -> by holds, then a->b and a->y holds
+
+Pseudo transitivity rule: If a -> b holds, and yb -> sigma holds, then ya -> sigma holds.
+
+Closure of Attribute Sets: Given a set, the closure of a set means the maximum set it can reach via functional dependency. **Is AG a super key** is equivalent to **Is AG+ >= R**
+
+
+
+To test functional dependency a -> b, we just check whether a+ >= b.
+
+
+
+We can "simplify" a set of functional dependency(FD) into canonical cover. No functional dependency in it is <u>extraneous(多余的)</u>
+
+If decomposition into R1, R2, R3..., and the FDs are F1, F2, F3..., then we call it is dependency preserving if (F1 U F2 U F3 ...)+ == F+
+
+We can also use this to test BCNF by checking if all the FD's source are Candidate keys.
+
+BCNF is not dependency preserving
+
+<u>There is always a loseless-join, dependency-preserving decomposition into 3NF</u>
+
+
+
+## Chapter 7:MVD
+
+Skipped
+
+
+
+## Chapter 8, 9,10: SQL/OLAP
+
+Embedded in SQL Brochure, skipped
+
+
+
+## Chapter 11
+
+
+
+
+
+## Chapter 13: RAID
 
 RAID: Redundant Arrays of Independent Disks
 
 - high capacity and high speed 
 - high reliability
 
-Mean time between failure: MTBF
+Mean time between failure: MTBF 
 
 Mean time to failure: MTTF
+
+Mean time to repair: MTTR
 
 in Poisson distributed arrivals, MTTF = MTBF
 
@@ -122,11 +282,11 @@ Conflict Serializable: 指的是可以通过调换顺序，实现“冲突调度
 
 Testing for Serializability:
 
-用“优先图”(precedence graph).
+**用“优先图”(precedence graph)**.
 
 箭头从
 
-write A -> write A
+write A -> write A	(t1先有write A，t2再有write A，这时候箭头从t1 -> t2)
 
 read A -> write A
 
@@ -156,19 +316,19 @@ Recoverable Schedules
 
 Dirty read 脏读
 
-在设计成Recoverable Schedule的前提下，若某个事物发生错误（failure），有可能会发生级联回滚(cascading rollback，多个事务读取到失效事务的数据，导致大量回滚,效率下降)。这时候这些读取到回滚数据的事务叫做脏读(dirty read)
+在设计成Recoverable Schedule的前提下，若某个事物发生错误（failure），有可能会发生级联回滚(cascading rollback，多个事务读取到失效事务的数据，导致大量回滚,效率下降)。这时候这些读取到回滚数据的事务叫做脏读(dirty read), 这种读法也叫做READ UNCOMMITTED
 
 
 
 Cascadeless Schedules
 
-我们要避免级联回滚，关键要想办法让上文提到的第一个事务commit后，第二个事务再读取关联数据，这样就可以避免发生级联回滚。Note that every cascadeless schedule is also recoverable.
+我们要避免级联回滚，关键要想办法让上文提到的第一个事务commit后，第二个事务再读取关联数据，这样就可以避免发生级联回滚。Note that every cascadeless schedule is also recoverable. 这种读法也叫做READ COMMITTED
 
 
 
 Weak levels of consistency
 
-有时候，数据库就需要特意被设计成“脏读”的模式，即一次读取某一瞬间的数据，所以我们就不需要或只需要使consistency保持在一个较低的水平。
+有时候，数据库就需要特意被设计成“不可重复读”的模式，即一次读取某一瞬间的数据，所以我们就不需要或只需要使consistency保持在一个较低的水平。
 
 
 
@@ -193,7 +353,7 @@ Isolation Levels：
 
 - Read UNCOMMITTED - 最低等级，会发生全部问题
 - Read COMMITTED - 解决了Dirty read脏读问题
-- Repeatable Read(RR) - 解决了脏读和不可重复读（Nonrepeatable Read）
+- Repeatable Read(RR) - 解决了脏读和不可重复读（Nonrepeatable Read）。保证读取数据的时候给数据上读(S)锁，让其他事务无法修改该数据。
 - Serializable - 最高等级，不会幻读/脏读/不可重复读
 
 
@@ -223,11 +383,11 @@ Deadlock 死锁
 
 Starvation 锁饿死
 
-有可能存在一个事务序列，其中每个事务都申请对某数据项加S 锁，且每个事务在授权加锁后一小段时内释放封锁，此时若另有一个事务T1 欲在该数据项上加X 锁， 则将永远轮不上封锁的机会。这种现象称为“ 饿死”（starvation)。
+有可能存在一个事务序列，其中每个事务都申请对某数据项加S 锁，且每个事务在授权加锁后一小段时内释放封锁，此时若另有一个事务T1 欲在该数据项上加X 锁， 则将永远轮不上封锁的机会。这种长时间的等待，最终导致事务过期的现象称为“ 饿死”（starvation)。
 可以用下列方式授权加锁来避免事务饿死。
 当事务T2 中请对数据项Q 加S 锁时，授权加锁的条件是：
 (1)不存在在数据项Q 上持有X 锁的其他事务；
-(2)不存在等待对数据项Q加锁且先于T2 申请加锁的事务。
+(2)不存在等待对数据项Q加锁且**先于T2 申请加锁**的事务。
 
 Two-Phase Locking Protocol
 
@@ -241,8 +401,8 @@ Lock point：最终获得锁的位置
 
 两种策略
 
-- Strict two-phase locking，限制X锁，可以保证不发生脏读
-- Rigorous two-phase locking，限制S+X锁，一般数据库采用的策略，保证不发生不可重复读+脏读。
+- Strict two-phase locking，在commit前不释放X锁，保证写完未commit的数据不被任何事务读取。可以保证不发生脏读
+- Rigorous two-phase locking，在commit前不释放所有锁，保证commit前读到的数据后续不再被修改。一般数据库采用的策略，保证不发生不可重复读+脏读。
 
 *如果已经有锁了，则可以直接读/写*
 
@@ -296,11 +456,13 @@ Timeout-based schemas
 
 Wait-for graph：用链图表示各个事务间的等待关系，若其中有环，则说明存在死锁。
 
+若T1正等待T2释放锁，则箭头从T1指向T2
+
 
 
 当检测到死锁的时候，系统就会挑一个victim进行回滚，期望打破死锁环。
 
-两种策略：1、把整个事务都弃用（abort）
+两种策略：1、把整个事务群都弃用（abort）
 
 2、将部分事务标记为victim，这个事务回滚到最开始的状态（级联）。但有可能会发生锁饿死（starvation），这需要命令oldest transaction never chosen as victim。
 
@@ -346,6 +508,8 @@ Intention lock are put on all the <u>ancestors</u> of a node before that node. �
 意向锁 allows a higher level node to be locked in S or X mode without having to check all descendent nodes. 不用遍历了!!
 
 锁的相容矩阵 compatibility matrix
+
+![compatibility matrix](https://ly-blog.oss-cn-shenzhen.aliyuncs.com/Database/compatibility_matrix.jpg)
 
 **三种意向锁**：IS,IX,SIX,其中SIX可以表示为S+IX，即有S的性质又有IX的性质，属于(S) and (IX)。S锁不能和IX/X/SIX相容，X锁不能和一切锁和意向锁相容。母节点加上某种锁之后，子节点也会被隐性加上该种锁。
 
@@ -599,13 +763,61 @@ DSS(Decision support systems) - 决策系统数据 vs. Operational data 操作�
 
 
 
+Data Warehouse的特性(SINT)
+
+- subject-oriented (面向主题，指的是个人或企业在使用数据仓库着重看重的方面)
+- integrated （数据集成，指的是需要消除源数据中的异值，保证数据仓库的独立性和一致性）
+- non-volatile （稳定性，数据一般用于查询，很少会对数据进行修改）
+- time variant （反映历史变化，可以用作数据分析，对未来进行预测）
 
 
 
+No update on Data warehouse -> once we need to change, we **refresh **
+
+the data warehouse.
 
 
+
+在生成warehouse的时候，要考虑到多数据来源带来的问题，如key conflict, data encoding等。
+
+
+
+Data Mart:
+
+A simple form of a data warehouse, focus on a single subject. 一言以概之，一个精简版的data warehouse.
+
+
+
+## Chapter 18 Data Mining
+
+Overall: Data mining is the process of semi-automatically analyzing large databases to find useful patterns. Similar to Machine Learning, but with a lot of data. Also called **knowledge discovery in databases**
+
+
+
+GINI Index: 
+
+- Binary GINI: GINI(N1) = 1 - (5/7)^2 - (2/7)^2
+- Overall GINI: (7/12) * GINI(N1) + (5/12) * GINI(N2) 
 
  
+
+Entropy:
+
+​	Entropy = -(1/6)log_2(1/6) - (5/6)log_2(5/6)
+
+
+
+Misclassification Error:
+
+​	Error = 1 - max(1/6, 5/6) 
+
+
+
+Support(s)
+
+Confidence(c)
+
+Total rules number = 3^d - 2^(d+1) + 1
 
 
 
