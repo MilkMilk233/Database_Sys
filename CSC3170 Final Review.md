@@ -842,3 +842,8 @@ Total rules number = 3^d - 2^(d+1) + 1
 No 4 NF, MVD, HASHING(DON'T WORRY TOO MUCH, BUT LITTLE), TIME_STAMP, 
 
 YES 3NF, BCNF, B-TREE, SQL, DATA_WAREHOUSE, SCHEMAS, LOCKING, ROLLUP, DATA_MINING, 
+	
+	
+## Update After exam
+
+散了散了，考的大部分是hw原题
